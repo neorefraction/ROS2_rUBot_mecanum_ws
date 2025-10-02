@@ -13,12 +13,12 @@
     <let name="world_path"
          value="$(find-pkg-share my_robot_bringup)/worlds/$(var custom_world)" />
     <let name="rviz_config_path"
-          value="$(find-pkg-share my_robot_bringup)/rviz/urdf_config.rviz" />
+          value="$(find-pkg-share my_robot_bringup)/rviz/urdf_lidar_cam.rviz" />
     <node pkg="joint_state_publisher" exec="joint_state_publisher">
         <param name="use_sim_time" value="$(var use_sim_time)" />
     </node>
     <node pkg="robot_state_publisher" exec="robot_state_publisher">
-        <param name="robot_description" command="xacro $(var robot_path)"/>
+        <param name="robot_description" value="$(command 'xacro $(var robot_path)')" />
         <param name="use_sim_time" value="$(var use_sim_time)" />
     </node>
     <include file="$(find-pkg-share gazebo_ros)/launch/gazebo.launch.py">

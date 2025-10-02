@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget unzip git iputils-ping \
     # ROS 2 add-ons
     ros-humble-rviz2 \
+    ros-humble-joint-state-publisher \
+    ros-humble-joint-state-publisher-gui \
     ros-humble-gazebo-ros-pkgs \
     ros-humble-gazebo-plugins \
     ros-humble-gazebo-ros2-control \
