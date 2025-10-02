@@ -93,7 +93,15 @@ The UB custom rUBot mecanum custom made robot is based on:
 - Raspberrypi4 computer onboard
 - Custom ROS2 configuration in Ubuntu22.04 server 64bits.
 
-`Local control`: Connecting to the rUBot with VScode window:
+`Local control`: 
+- Connect to the rUBot with VScode window: Use Remote Explorer extension or type:
+  ````shell
+  ssh ubuntu@192.168.1.14
+  ````
+- If you find problems to connect, Regenerate the Keys. Type (change with your rUBot IP address)
+  ````shell
+  ssh-keygen -R 192.168.1.14
+  ````
 - Verify you have the file: `clone_student_project.sh` in your `\user\home` folder. This file is located at: `ROS2_rUBot_mecanum_ws/Documentation/Files/Install_robot/Local_VScode/clone_student_project.sh`
 - Open rUBot_0x session on `\user\home` and type:
   ````shell
