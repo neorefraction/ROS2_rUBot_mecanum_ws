@@ -94,22 +94,25 @@ The UB custom rUBot mecanum custom made robot is based on:
 - Custom ROS2 configuration in Ubuntu22.04 server 64bits.
 
 `Local control`: 
-- Connect to the rUBot with VScode window: Use Remote Explorer extension or type:
-  ````shell
-  ssh ubuntu@192.168.1.14
-  ````
+- Connect to the rUBot with VScode window: Use Remote Explorer extension to open a remote window on rUBot5 (number change for each group) 
+![](./Images/01_Setup/Code_ssh.png)
 - If you find problems to connect, Regenerate the Keys. Type (change with your rUBot IP address)
   ````shell
-  ssh-keygen -R 192.168.1.14
+  ssh-keygen -R 192.168.1.54
   ````
-- Verify you have the file: `clone_student_project.sh` in your `\user\home` folder. This file is located at: `ROS2_rUBot_mecanum_ws/Documentation/Files/Install_robot/Local_VScode/clone_student_project.sh`
-- Open rUBot_0x session on `\user\home` and type:
+- Verify you have the file: `clone_student_project.sh` in your `\home\ubuntu` folder. This file is located at: `ROS2_rUBot_mecanum_ws/Documentation/Files/Install_robot/Local_VScode/clone_student_project.sh`
+- In a new terminal on `\home\ubuntu` type:
   ````shell
   source clone_student_project.sh
   ````
   >specify the `Director` github username 
 
   >This script will make the project clone, compilation and .bashrc configuration (4minutes aprox)
+- Verify the .bashrc file has the DISPLAY environment variable to use graphical tools like Rviz2:
+  ````shell
+  export DISPLAY=192.168.1.65:0.0 #Change with your computer IP address
+  ````
+- Execute `MobaXterm` in your computer to have an Xserver running for graphical tools
 - Execute the bringup:
   ```bash
   ros2 launch my_robot_bringup my_robot_bringup_hw.launch.py

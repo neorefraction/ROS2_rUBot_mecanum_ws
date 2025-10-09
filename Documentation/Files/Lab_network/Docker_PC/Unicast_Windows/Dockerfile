@@ -6,6 +6,7 @@ RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
 
 # Paquets extra: RViz2 + Gazebo Classic + utils
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Suport gràfic per X11
     x11-apps \
     libgl1-mesa-glx \
     libgl1-mesa-dri \
@@ -17,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxext6 \
     libxrender1 \
     libxtst6 \
+    # Eines de desenvolupament
     build-essential \
     cmake \
     python3-colcon-common-extensions \
@@ -35,7 +37,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-cartographer-ros \
     ros-humble-teleop-twist-keyboard \
     ros-humble-rmw-cyclonedds-cpp \
+    # Gazebo Classic (Gazebo 11)
+    gazebo11 \
+    libgazebo11-dev \
     && rm -rf /var/lib/apt/lists/*
+
 
 # YOLO (compatibilitat amb ultralytics)
 #RUN pip3 install --no-cache-dir ultralytics "numpy<1.24"
