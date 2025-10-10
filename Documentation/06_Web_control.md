@@ -65,7 +65,7 @@ Then you proceed with:
 - Run a simple HTTP server. Open PowerShell or CMD and run:
     ````python
     cd ~/ROS2_rUBot_mecanum_ws/web
-    python -m http.server 8000
+    python3 -m http.server 8000
     ````
     This starts a simple HTTP server on port 8000.  
 
