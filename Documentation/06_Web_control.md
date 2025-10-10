@@ -127,5 +127,8 @@ You can find the code in the `web` folder of the repository.
 
 Remember to copy this file as `index.html` in the `web` folder of PC
 
-The updated page should look something like this:
+The updated page should look something like this in Virtual environment:
 ![](./Images/06_Web/JoyPosCamDashboard.png)
+
+The updated page should look something like this in Real robot:
+![](./Images/06_Web/RealDashboard.png)
