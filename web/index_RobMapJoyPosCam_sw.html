@@ -91,7 +91,7 @@
             }
 
             const rosbridgeAddress = document.getElementById('rosbridge-address').value;
-            const mapPath = `../src/Navigation_Projects/my_robot_navigation2/map/${mapName}.pgm`;
+            const mapPath = `maps/${mapName}.png`;
 
             document.getElementById('map-image').src = mapPath;
 
@@ -120,7 +120,7 @@
 
             const imageTopic = new ROSLIB.Topic({
                 ros: ros,
-                name: '/image_raw/compressed',
+                name: '/camera1/image_raw/compressed',
                 messageType: 'sensor_msgs/msg/CompressedImage'
             });
 
