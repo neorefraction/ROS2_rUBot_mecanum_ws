@@ -41,10 +41,17 @@
             background-color: #000;
         }
 
-        .position-display {
+        .position-display, .map-display {
             width: 200px;
             padding: 10px;
             background-color: #fff;
+            border-radius: 5px;
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
             border-radius: 5px;
         }
     </style>
@@ -52,7 +59,8 @@
 
 <body>
     <div class="connection-form">
-        <input type="number" id="robot-number" placeholder="Número de robot (ex: 5)">
+        <input type="text" id="rosbridge-address" placeholder="ws://localhost:9090">
+        <input type="text" id="map-name" placeholder="Nom del mapa (ex: map)">
         <button onclick="connectToROS()">Connecta</button>
     </div>
     <div class="dashboard">
@@ -63,6 +71,10 @@
             <p>X: <span id="position-x">0</span></p>
             <p>Y: <span id="position-y">0</span></p>
         </div>
+        <div class="map-display">
+            <h3>Mapa</h3>
+            <img id="map-image" class="map-image" alt="Mapa">
+        </div>
     </div>
 
     <script>
@@ -71,18 +83,17 @@
         let joystick;
 
         function connectToROS() {
-            const robotNumber = parseInt(document.getElementById('robot-number').value);
-            if (isNaN(robotNumber)) {
-                alert("Introdueix un número de robot vàlid.");
-                return;
+            let mapName = document.getElementById('map-name').value.trim();
+            if (!mapName) {
+                mapName = "map";
             }
 
-            const ipLastOctet = robotNumber + 4;
-            const rosbridgeAddress = `ws://192.168.1.${ipLastOctet}:9090`;
+            const rosbridgeAddress = document.getElementById('rosbridge-address').value;
+            const mapPath = `../src/Navigation_Projects/my_robot_navigation2/map/${mapName}.pgm`;
 
-            ros = new ROSLIB.Ros({
-                url: rosbridgeAddress
-            });
+            document.getElementById('map-image').src = mapPath;
+
+            ros = new ROSLIB.Ros({ url: rosbridgeAddress });
 
             ros.on('connection', function () {
                 console.log('Connectat a rosbridge:', rosbridgeAddress);

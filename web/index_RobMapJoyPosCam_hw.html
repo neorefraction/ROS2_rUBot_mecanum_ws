@@ -59,8 +59,7 @@
 
 <body>
     <div class="connection-form">
-        <input type="number" id="rosbridge-address" placeholder="Número de robot (ex: 5)">
-        <input type="text" id="map-name" placeholder="Nom del mapa (sense extensió)">
+        <input type="text" id="map-name" placeholder="Nom del mapa (ex: map)">
         <button onclick="connectToROS()">Connecta</button>
     </div>
     <div class="dashboard">
@@ -83,20 +82,13 @@
         let joystick;
 
         function connectToROS() {
-            const robotNumber = parseInt(document.getElementById('rosbridge-address').value);
-            const mapName = document.getElementById('map-name').value.trim();
-
-            if (isNaN(robotNumber)) {
-                alert("Introdueix un número de robot vàlid.");
-                return;
-            }
+            let mapName = document.getElementById('map-name').value.trim();
             if (!mapName) {
-                alert("Introdueix el nom del mapa.");
-                return;
+                mapName = "map";
             }
 
-            const ipLastOctet = robotNumber + 4;
-            const rosbridgeAddress = `ws://192.168.1.${ipLastOctet}:9090`;
+            const serverIP = window.location.hostname;
+            const rosbridgeAddress = `ws://${serverIP}:9090`;
             const mapPath = `../src/Navigation_Projects/my_robot_navigation2/map/${mapName}.pgm`;
 
             document.getElementById('map-image').src = mapPath;

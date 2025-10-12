@@ -1,11 +1,37 @@
-# TP-Link AC600 (RTL8811AU/RTL8821CU) Driver Installation on Ubuntu 22.04
+# SSD portable disc installation guide
+
+We have installed:
+- Ubuntu 22.04 LTS
+- ROS2 Humble Hawksbill
+
+We need to install manually:
+- Gazebo11
+- wifi driver 
+
+## Gazebo installation
+
+To install gazebo11 on Ubuntu 22.04, follow these steps:
+
+```bash
+sudo apt update
+sudo apt install -y gazebo11 libgazebo11-dev ros-humble-gazebo-ros-pkgs ros-humble-gazebo-plugins ros-humble-gazebo-ros2-control
+```
+
+## WiFi driver
+
+The best option is to use a WiFi adapter compatible with Linux.
+
+We have used: BrosTrend Adaptador WiFi Linux 1200Mbps, WiFi USB Linux (https://www.amazon.es/dp/B07FCNP2VL)
+
+
+### Low-cost: TP-Link AC600 (RTL8811AU/RTL8821CU) Driver Installation on Ubuntu 22.04
+
+An interesting low-cost alternative is TP-Link AC600.
 
 This guide explains how to install the **TP-Link Archer T2U Nano AC600** Wi-Fi adapter driver on Ubuntu 22.04.  
 The chipset is **Realtek RTL8811AU / RTL8821CU**, which is not supported by default.
 
----
-
-## 1. Prepare the system
+### 1. Prepare the system
 
 Make sure you have the required tools to compile DKMS drivers:
 
@@ -14,9 +40,7 @@ sudo apt update
 sudo apt install -y build-essential dkms git linux-headers-$(uname -r)
 ```
 
----
-
-## 2. Clone the correct repository
+### 2. Clone the correct repository
 
 The following repository supports **RTL8811AU/RTL8821CU** chipsets:
 
@@ -26,9 +50,7 @@ git clone https://github.com/morrownr/8821cu-20210916.git
 cd 8821cu-20210916
 ```
 
----
-
-## 3. Install the driver
+### 3. Install the driver
 
 Run the installation script:
 
@@ -39,9 +61,7 @@ sudo ./install-driver.sh
 - If asked about editing driver options → answer **`N` (No)**.  
 - Options can be edited later manually if needed.
 
----
-
-## 4. Configure driver options (recommended)
+### 4. Configure driver options (recommended)
 
 To disable USB power saving and avoid disconnections, add:
 
@@ -50,9 +70,7 @@ echo "options 8821cu rtw_power_mgnt=0 rtw_enusbss=0 rtw_ips_mode=0" | \
   sudo tee /etc/modprobe.d/8821cu.conf
 ```
 
----
-
-## 5. Load the module and restart services
+### 5. Load the module and restart services
 
 ```bash
 sudo modprobe -r 8821cu || true
@@ -62,9 +80,7 @@ sudo systemctl restart NetworkManager
 
 If the interface does not appear, unplug and replug the Wi-Fi dongle.
 
----
-
-## 6. Verify the interface
+### 6. Verify the interface
 
 ```bash
 ip link             # should show 'wlan0' or 'wlx...' interface
@@ -72,9 +88,7 @@ nmcli dev status    # should show 'wifi' as available
 nmcli dev wifi list # should list available Wi-Fi networks
 ```
 
----
-
-## 7. Connect to a Wi-Fi network
+### 7. Connect to a Wi-Fi network
 
 You can connect via Network Manager GUI (top-right menu)  
 or via terminal:
@@ -83,9 +97,7 @@ or via terminal:
 nmcli dev wifi connect "SSID_NAME" password "SSID_PASSWORD"
 ```
 
----
-
-## 8. Check your IP address
+### 8. Check your IP address
 
 ```bash
 hostname -I
@@ -94,9 +106,7 @@ ip a
 
 Your Wi-Fi interface should have an IP like `192.168.1.xxx`.
 
----
-
-## 9. Uninstall the driver (if needed)
+### 9. Uninstall the driver (if needed)
 
 If you want to remove the driver:
 
@@ -105,6 +115,27 @@ cd ~/8821cu-20210916
 sudo ./remove-driver.sh
 ```
 
----
 
 ✅ With this, the TP-Link AC600 dongle should work correctly on Ubuntu 22.04 with full Wi-Fi connectivity.
+
+## Install Docker
+
+We have created a `install_docker.sh` to automatically:
+- Updates the system package index.
+- Installs required dependencies (ca-certificates, curl, gnupg).
+- Adds Docker’s official GPG key.
+- Sets up the Docker repository.
+- Installs Docker Engine and plugins.
+- Installs the standalone docker-compose binary.
+- Verifies both installations.
+
+To run the script:
+```bash
+chmod +x install_docker.sh
+./install_docker.sh
+````
+After installation, you can verify Docker and Docker Compose are installed correctly by running:
+```bash
+docker --version
+docker-compose --version
+```
