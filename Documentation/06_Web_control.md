@@ -3,6 +3,8 @@ Web Dashboard provides a framework for controlling and monitoring robotic system
 
 ![](./Images/06_Web/Dashboard.png)
 
+An interesting Open Class is made by TheConstruct company: [Create a Dashboard](https://app.theconstruct.ai/open-classes/1601c35e-0671-4960-9cfe-8372b4624abe)
+
 Most robots used in companies come with web dashboards, allowing operators to easily control the robot's core functions and view diagnostic information without needing to rely on development tools like RViz2 or ROS commands to interact with the robot.
 
 For this, we will be using:
@@ -56,13 +58,24 @@ Then you proceed with:
     ````shell
     ros2 launch my_robot_bringup my_robot_bringup_hw.launch.py
     ````
-- Start rosbridge websocket (port 9090)
+- Start rosbridge server websocket (port 9090)
+    - in virtual environment
+    ````shell
+    ros2 launch rosbridge_server main_rosbridge_launch.py
+    ````
+    - in Real environment
     ````shell
     ros2 launch rosbridge_server rosbridge_websocket_launch.xml
     ````
-    This starts a WebSocket server at: `ws://<ROBOT_IP>:9090`
+    This starts a Rosbridge WebSocket server on port 9090
         
 - Run a simple HTTP server. Open PowerShell or CMD and run:
+    - in virtual environment
+    ````shell
+    cd ~/ROS2_rUBot_mecanum_ws/web
+    python3 -m http.server 7000
+    ````
+    - in Real environment
     ````python
     cd ~/ROS2_rUBot_mecanum_ws/web
     python3 -m http.server 8000
@@ -75,8 +88,7 @@ Then you proceed with:
 
 - Go to the generated `webpage_address`:
     - Real robot the address will be `http://<ROBOT_IP>:8000/`
-    - Virtual robot you will obtain this address typing `webpage_address` in a new terminal.
-    The page (index.html) will be loaded.
+    - Virtual robot you will obtain this address typing `webpage_address` in a new terminal.You have to click on the generated link address and the page (index.html) will be loaded.
 - In the connection field we have to write the address where our RosBridge is run. 
     - Real robot the address will be `ws://<ROBOT_IP>:9090`
     - Virtual robot you will obtain this address typing `rosbridge_address` in a new terminal
