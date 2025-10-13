@@ -72,7 +72,6 @@
             <p>X: <span id="position-x">0</span></p>
             <p>Y: <span id="position-y">0</span></p>
         </div>
-        </div>
         <div class="map-display">
             <h3>Mapa</h3>
             <img id="map-image" class="map-image" alt="Mapa">
@@ -90,8 +89,8 @@
                 mapName = "map";
             }
 
-            const serverIP = window.location.hostname;
-            const rosbridgeAddress = `ws://${serverIP}:9090`;
+            const Address = window.location.hostname;
+            const rosbridgeAddress = `ws://${Address}:9090`;
             const mapPath = `maps/${mapName}.png`;
 
             document.getElementById('map-image').src = mapPath;
@@ -121,7 +120,7 @@
 
             const imageTopic = new ROSLIB.Topic({
                 ros: ros,
-                name: '/image_raw/compressed',
+                name: '/camera1/image_raw/compressed',
                 messageType: 'sensor_msgs/msg/CompressedImage'
             });
 
