@@ -41,7 +41,8 @@
             background-color: #000;
         }
 
-        .position-display, .map-display {
+        .position-display,
+        .map-display {
             width: 200px;
             padding: 10px;
             background-color: #fff;
@@ -49,8 +50,6 @@
         }
 
         .map-image {
-            width: 320px;
-            height: 240px;
             width: 100%;
             height: auto;
             border: 1px solid #ccc;
@@ -61,8 +60,8 @@
 
 <body>
     <div class="connection-form">
-        <input type="text" id="rosbridge-address" placeholder="ws://localhost:9090">
         <input type="text" id="map-name" placeholder="Nom del mapa (ex: map)">
+        <!-- <p>Adreça rosbridge: <span id="rosbridge-address"></span></p> -->
         <button onclick="connectToROS()">Connecta</button>
     </div>
     <div class="dashboard">
@@ -84,15 +83,23 @@
         let cmdVelTopic;
         let joystick;
 
+        function getRosbridgeAddress() {
+            const currentUrl = window.location.href;
+            const rosbridgeUrl = currentUrl.replace(/\/webpage\/?$/, '/rosbridge/');
+            const rosbridgeAddress = rosbridgeUrl.replace(/^http/, 'ws').replace(/^https/, 'wss');
+            return rosbridgeAddress;
+        }
+
         function connectToROS() {
             let mapName = document.getElementById('map-name').value.trim();
             if (!mapName) {
                 mapName = "map";
             }
 
-            const rosbridgeAddress = document.getElementById('rosbridge-address').value;
+            const rosbridgeAddress = getRosbridgeAddress();
             const mapPath = `maps/${mapName}.png`;
 
+            // document.getElementById('rosbridge-address').textContent = rosbridgeAddress;
             document.getElementById('map-image').src = mapPath;
 
             ros = new ROSLIB.Ros({ url: rosbridgeAddress });
@@ -115,26 +122,28 @@
             cmdVelTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/cmd_vel',
-                messageType: 'geometry_msgs/msg/Twist'
+                messageType: 'geometry_msgs/Twist'
             });
 
             const imageTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/camera1/image_raw/compressed',
-                messageType: 'sensor_msgs/msg/CompressedImage'
+                messageType: 'sensor_msgs/CompressedImage'
             });
 
             imageTopic.subscribe(function (message) {
+                console.log("Imatge rebuda");
                 document.getElementById('camera-feed').src = "data:image/jpeg;base64," + message.data;
             });
 
             const odomTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/odom',
-                messageType: 'nav_msgs/msg/Odometry'
+                messageType: 'nav_msgs/Odometry'
             });
 
             odomTopic.subscribe(function (message) {
+                console.log("Odometria rebuda", message.pose.pose.position);
                 document.getElementById('position-x').textContent = message.pose.pose.position.x.toFixed(2);
                 document.getElementById('position-y').textContent = message.pose.pose.position.y.toFixed(2);
             });
