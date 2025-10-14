@@ -5,8 +5,7 @@
 docker compose -f docker-compose-linux.yml up -d
 ```
 
-nstruccions (Linux host)
-0) (Només una vegada) Permetre l’accés X11 al contenidor
+- (Només una vegada) Permetre l’accés X11 al contenidor
 
 Això deixa entrar processos locals (inclòs Docker) al teu servidor X:
 
