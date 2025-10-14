@@ -38,8 +38,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-teleop-twist-keyboard \
     ros-humble-rmw-cyclonedds-cpp \
     # Gazebo Classic (Gazebo 11)
-    gazebo11 \
-    libgazebo11-dev \
+    gazebo \
+    libgazebo-dev \
     && rm -rf /var/lib/apt/lists/*
 
 

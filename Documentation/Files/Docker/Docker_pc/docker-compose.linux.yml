@@ -1,0 +1,34 @@
+services:
+  pc-humble:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pc_humble_image
+    container_name: pc_humble
+    privileged: true
+
+    # Host networking: el contenidor comparteix la xarxa amb l'host
+    network_mode: host
+
+    environment:
+      # ROS / DDS
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_DOMAIN_ID=10
+      - ROS_LOCALHOST_ONLY=0
+
+      # X11 (Linux host): heretem el DISPLAY de l'host
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      # Si tens problemes amb OpenGL dins del contenidor, mantén aquests flags:
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - MESA_GL_VERSION_OVERRIDE=2.1
+
+    # Per a X11 i acceleració gràfica/som
+    volumes:
+      - ./entrypoint.pc.sh:/entrypoint.pc.sh
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw   # Soquet X11 de l'host
+      - /dev/dri:/dev/dri                  # (opcional) GPU via Mesa
+      - /dev/snd:/dev/snd                  # (opcional) So (si cal)
+
+    entrypoint: /entrypoint.pc.sh
+    command: sleep infinity
