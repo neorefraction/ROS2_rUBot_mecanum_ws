@@ -508,7 +508,7 @@ You will have to:
 
 To verify the final bringup, execute `my_robot_bringup_sw.launch.xml` launch file with your speciffic argument values: 
 ```shell
-ros2 launch my_robot_bringup my_robot_bringup_sw.launch.xml use_sim_time:=true robot:=rubot/rubot_custom.urdf custom_world:=square3m_walls.world x0:=0.0 y0:=0.0 yaw0:=1.57
+ros2 launch my_robot_bringup my_robot_bringup_sw.launch.xml use_sim_time:=true robot:=rubot/rubot_mecanum.urdf custom_world:=square3m_walls.world x0:=0.0 y0:=0.0 yaw0:=1.57
 ```
 ![](./Images/02_rubot_model/07_mecanum_bringup.png)
 
