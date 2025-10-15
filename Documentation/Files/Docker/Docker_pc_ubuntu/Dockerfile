@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-cartographer-ros \
     ros-humble-teleop-twist-keyboard \
     ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-rosbridge-server \
     # Gazebo Classic (Gazebo 11)
     gazebo \
     libgazebo-dev \

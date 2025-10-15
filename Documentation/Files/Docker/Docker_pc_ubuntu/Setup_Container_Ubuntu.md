@@ -1,6 +1,6 @@
 # Install container
 
-CTo install Docker and create a ROS2 container in your SSD disc, copy the `Docker_PC_ubuntu` folder to your PC and follow instructions:
+To install Docker and create a ROS2 container in your SSD disc, copy the `Docker_PC_ubuntu` folder to your PC and follow instructions:
 
 - Allow access X11 to container
     ```shell

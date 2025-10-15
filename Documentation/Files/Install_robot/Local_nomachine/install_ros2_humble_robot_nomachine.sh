@@ -32,7 +32,8 @@ sudo apt install -y \
   ros-humble-cartographer-ros \
   x11-apps libgl1-mesa-glx mesa-utils \
   libqt5x11extras5 libxkbcommon-x11-0 \
-  python3-ament-package
+  python3-ament-package \
+  ros-humble-rosbridge-server
 
 echo "=== 5. Python packages ==="
 pip3 install -U ultralytics "numpy<1.24" pyserial

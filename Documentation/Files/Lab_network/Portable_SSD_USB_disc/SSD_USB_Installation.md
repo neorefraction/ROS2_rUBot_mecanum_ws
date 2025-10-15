@@ -8,13 +8,17 @@ We need to install manually:
 - Gazebo11
 - wifi driver 
 
-## Gazebo installation
+## Usefull packages installation
 
 To install gazebo11 on Ubuntu 22.04, follow these steps:
 
 ```bash
 sudo apt update
-sudo apt install -y gazebo11 libgazebo11-dev ros-humble-gazebo-ros-pkgs ros-humble-gazebo-plugins ros-humble-gazebo-ros2-control
+sudo apt install -y gazebo libgazebo-dev ros-humble-gazebo-ros-pkgs ros-humble-gazebo-plugins ros-humble-gazebo-ros2-control
+```
+Also is important to install:
+```bash
+sudo apt install ros-humble-robot-state-publisher ros-humble-joint-state-publisher ros-humble-joint-state-publisher-gui ros-humble-xacro
 ```
 
 ## WiFi driver

@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-rmw-cyclonedds-cpp \
     ros-humble-demo-nodes-cpp \
     ros-humble-teleop-twist-keyboard \
+    ros-humble-rosbridge-server \
     # Eines gràfiques de ROS2
     ros-humble-rviz2 \
     ros-humble-rqt-graph \

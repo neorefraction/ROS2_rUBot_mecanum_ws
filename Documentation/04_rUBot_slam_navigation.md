@@ -157,7 +157,7 @@ To navigate programmatically using Simple Commander API, you have to proceed wit
         ````shell
         ros2 launch my_robot_navigation2 navigation2_robot.launch.py use_sim_time:=False robot:=robot_arm/my_simple_robot.urdf map_file:=map_square4m_sign.yaml params_file:=rubot_real.yaml
         ````
-- Launch the created python file to define the Initial point and one target point:the targets waypoints
+- Launch the created python file to define the Initial point and one target point defined in nav_target.py file:
     ````shell
     ros2 launch my_robot_nav_control nav_target.launch.py
     ````

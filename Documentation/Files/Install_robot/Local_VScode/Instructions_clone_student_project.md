@@ -2,11 +2,12 @@
 
 You have to:
 
-- Connect to your robot using MobaXterm
+- Connect to your robot using VScode
 - Copy the following files to the `home/ubuntu` folder of your robot:
-  - `install_ros2_humble_code_robot.sh`
-  - `clone_student_project.sh`
-> Be sure the files are executables
+  - `install_ros2_humble_code_robot.sh`: to install the ROS2 Humble environment without any repository project
+  - `install_ros2_humble_code&manelpuig_project.sh`: to install the ROS2 Humble environment with manelpuig repository project
+  - `clone_student_project.sh`: to clone the student project each time any student wants to work on it
+  > Be sure the files are executables
 
 # ✅ Install the ROS2 environment
 
@@ -21,18 +22,18 @@ Execute the script (40min approx):
 
 Students have to:
 - Open rUBot_0x session and specify the `Director`student project (4minutes aprox)
-- If the session is not programmed you have to write in a new terminal:
+- Student has to write in a new terminal:
   ````shell
   source clone_student_project.sh
   ````
 - Execute the bringup:
   ```bash
-  ros2 launch my_robot_bringup my_robot_nano_bringup_hw.launch.py
+  ros2 launch my_robot_bringup my_robot_bringup_hw.launch.py
   ```
 
 # ✅ Verify the installation
 You proceed with:
-  - Execute MobaXterm in your computer
+  - Execute XLaunch in your computer
   - Open a new terminal on VScode and type:
     ```bash
     ros2 topic list
