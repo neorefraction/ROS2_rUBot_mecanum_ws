@@ -32,7 +32,7 @@ To install Docker and create a ROS2 container in your SSD disc, copy the `Docker
     docker exec -it pc_humble bash
     ```
 - Verify that ROS2 is working with graphical interface:
-    ``shell
+    ```shell
     rviz2
     gazebo
     ```
