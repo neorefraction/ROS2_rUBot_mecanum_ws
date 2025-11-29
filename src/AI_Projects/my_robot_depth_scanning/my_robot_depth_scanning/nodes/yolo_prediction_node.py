@@ -1,5 +1,5 @@
 """
-This module contains a node that reada message from a Limo's
+This module contains a node that reads messages from a Limo's
 depth camera and publish an image with all the objects
 position, prediction and depth
 """
@@ -8,7 +8,7 @@ position, prediction and depth
 from typing import Optional
 import rclpy
 from my_robot_ai_identification.real_time_prediction.yolo_service import YoloService
-from my_robot_ai_identification.real_time_prediction.image_processor import ImageProcessor
+from services.images_service import *
 
 # ROS2 core imports
 from rclpy.node import Node
@@ -20,57 +20,61 @@ from sensor_msgs.msg import Image
 # Custom message import
 from custom_msgs.msg import Yolov8Inference, InferenceResult
 
+
+YOLO_PREDICTIONS_TOPIC = "/yolo/predictions"
+
+
 class YoloPredictionNode(Node):
 
-    def __init__(self, yolo_service: YoloService) -> None:
+    def __init__(self, model_path: str) -> None:
         """
-        Initializes the YoloPredictionNode. Both subscriber to the depth camera topic
-        and the publishers for the predictions and the predicted image are created here.
+        This node is responsible for reading the image messages from the depth camera
+        publish the an image with the predictions, and a message with their x, y-coordinates.
 
         Parameters:
         ----------
-        node_name : str
-            The name of the node.
-        yolo_service : YoloService
-            The YOLO service instance to be used for predictions.
+        model_path : str
+            The path to the YOLO model to be used for predictions.
         """
 
+         # Sets node's name
         super().__init__("yolo_prediction_node")
 
-        self.yolo = yolo_service
-        self.image_processor = ImageProcessor()
+        # Declare node topics as parameters
+        self.declare_parameter('camera_topic', '/camera/color/image_raw')
+        camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
 
-        # Node subscriptions
+        self.yolo = YOLO(model_path)
+
+        # Subscribe node to raw image topic
         self.create_subscription(
             Image,
-            "/camera/color/image_raw",
+            camera_topic,
             self.raw_image_callback,
             10
         )
 
-        self.create_subscription(
+        # Publish images with predictions to yolo predictions topic
+        self.prediction_publisher = self.create_publisher(
             Image,
-            "/camera/depth/image_raw",
-            self.depth_image_callback,
+            f'{YOLO_PREDICTIONS_TOPIC}/prediction_image',
             10
         )
 
-        # Node publishers
-        self.prediction_publisher = self.create_publisher(
-            Yolov8Inference,
-            "/yolo/predictions",
-
+        # Publish custom coordinates messages to predictions/coordinates topic
+        self.coordinates_publisher = self.create_publisher(
+            InferenceCoordinates,
+            f'{YOLO_PREDICTIONS_TOPIC}/coordinates',
             10
         )
 
         # Computation variables
         self.raw_image = None
-        self.depth_image = None
 
         # Main loop
         self.create_timer(0.1, self.run)  # Run at 10 Hz
-    
-    
+
+
     def raw_image_callback(self, msg: Image) -> None:
         """
         Callback for the raw image topic. It just saves the image to avoid
@@ -83,50 +87,52 @@ class YoloPredictionNode(Node):
         """
         self.raw_image = msg
 
-    
-    def depth_image_callback(self, msg: Image) -> None:
+
+    def run(self) -> None:
         """
-        Callback for the depth image topic. It just saves the image to avoid
-        interruption blocks.
+        Main loop responsible for performing the predictions.
+        """
+
+        # Early return if no images are read
+        if not self.raw_image:
+            return
+
+        # Convert ROS image to OpenCV image
+        raw_img = ros_to_cv(self.raw_image)
+
+        # Get predictions
+        predictions = self.get_predictions(raw_img)
+
+        # Early return if no results
+        if not predictions:
+            return
+
+        # If predictions publish the image and their coordinates
+        self.publish_predictions(predictions)
+
+
+    def get_predictions(self, img: Image) -> list:
+        """
+        Returns the predictions made by the YOLO model.
 
         Parameters:
         ----------
-        msg : Image
-            The depth image message from the topic.
+        img : Image
+            The image to be predicted.
+
+        Returns:
+        -------
+        list
+            The predictions made by the YOLO model.
         """
-        self.depth_image = msg
-
-
-    def run(self) -> None:
-        print("Running YOLO prediction...")
-        raw_img = self.image_processor.ros_to_cv(self.raw_image) if self.raw_image else None
-        depth_img = self.image_processor.ros_to_cv(self.depth_image, encoding='32FC1') if self.depth_image else None
-
-        results = self.get_predictions(raw_img)
-
-        # Early return if no results
-        if not results:
-            return
-        
-        self.analyze_detections(results, depth_img)
-        
-
-    def get_predictions(self, img: Optional[Image]) -> None:
-
-        # Early exit if no images are read
-        if img is None:
-            return
-
-        return self.yolo.predict(img)
+        return self.yolo(img)
 
     
-    def analyze_detections(self, detections: list, depth_image: Optional[Image]) -> None:
-        # Create YOLO inference image message
-        inference_image = Yolov8Inference()
-        inference_image.header.frame_id = "inference"
-        inference_image.header.stamp = self.get_clock().now().to_msg()
+    def publish_predictions(self, detections: list) -> None:
 
-        print(type(depth_image))
+        print(type(detections))
+
+        #for detection in detections.detections:
 
         for d in detections:
             for b in d.boxes:
@@ -169,7 +175,7 @@ class YoloPredictionNode(Node):
 def main() -> None:
     # Initialize ROS2
     rclpy.init()
-    
+
     # Create YOLO service and node
     model = '/home/johnnyastudillo/Desktop/ROS2_rUBot_mecanum_ws/src/AI_Projects/my_robot_ai_identification/models/yolov8n_custom.pt'
     yolo = YoloService(model)
