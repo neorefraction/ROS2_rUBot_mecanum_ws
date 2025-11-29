@@ -5,10 +5,9 @@ position, prediction and depth
 """
 
 # YOLO service imports
-from typing import Optional
 import rclpy
-from my_robot_ai_identification.real_time_prediction.yolo_service import YoloService
-from services.images_service import *
+from my_robot_depth_scanning.services.images_service import *
+from ultralytics import YOLO
 
 # ROS2 core imports
 from rclpy.node import Node
@@ -167,8 +166,8 @@ def main() -> None:
 
     # Create YOLO service and node
     model = '/home/johnnyastudillo/Desktop/ROS2_rUBot_mecanum_ws/src/AI_Projects/my_robot_ai_identification/models/yolov8n_custom.pt'
-    yolo = YoloService(model)
-    node = YoloPredictionNode(yolo)
+    #yolo = YoloService(model)
+    node = YoloPredictionNode(model)
 
     # Spin the node
     rclpy.spin(node)
