@@ -1,7 +1,7 @@
 """
 This module contains a node that reads messages from a Limo's
-depth camera and publish an image with all the objects
-position, prediction and depth
+depth camera and publish an image with all the predictions and a message
+with the objects, their positions and depth.
 """
 
 # YOLO service imports
@@ -17,7 +17,7 @@ from rclpy.logging import get_logger
 from sensor_msgs.msg import Image
 
 # Custom message import
-from custom_msgs.msg import Yolov8Inference, InferenceResult
+from custom_msgs.msg import InferenceData
 
 
 YOLO_PREDICTIONS_TOPIC = "/yolo/predictions"
@@ -56,14 +56,14 @@ class YoloPredictionNode(Node):
         # Publish images with predictions to yolo predictions topic
         self.prediction_publisher = self.create_publisher(
             Image,
-            f'{YOLO_PREDICTIONS_TOPIC}/prediction_image',
+            f'{YOLO_PREDICTIONS_TOPIC}/predictions_image',
             10
         )
 
         # Publish custom coordinates messages to predictions/coordinates topic
         self.coordinates_publisher = self.create_publisher(
-            InferenceCoordinates,
-            f'{YOLO_PREDICTIONS_TOPIC}/coordinates',
+            InferenceData,
+            f'{YOLO_PREDICTIONS_TOPIC}/predictions_data',
             10
         )
 
@@ -107,7 +107,7 @@ class YoloPredictionNode(Node):
             return
 
         # If predictions publish the image and their coordinates
-        self.publish_detections(raw_image.copy(), predictions.detections)
+        self.publish_detections(raw_image.copy(), predictions[0]) # Just one prediction is performed as we send just one image at a time
 
 
     def get_predictions(self, img: Image) -> list:
@@ -127,7 +127,7 @@ class YoloPredictionNode(Node):
         return self.yolo(img)
 
     
-    def publish_detections(self, raw_image: np.ndarray, detections: list) -> None:
+    def publish_detections(self, raw_image: np.ndarray, prediction: list) -> None:
             # Overlay the detected object's name and confidence level
             # object_name = results.hypothesis.class_id
             # confidence = results.hypothesis.score * 100  # Confidence in percentage
@@ -137,27 +137,28 @@ class YoloPredictionNode(Node):
             # cv2.putText(overlay_image, label, (x_min, y_min - 10),
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        for d in detections:
-            # Assuming one prediction per detection
-            prediction = d.boxes[0]
-            # Extract prediction data
-            prediction_class = int(prediction.cls)
-            prediction_xywh = prediction.xywh[0].to('cpu').detach().numpy().copy()
-            prediction_xyxy = prediction.xyxy[0].to('cpu').detach().numpy().copy()
+        inference_data = InferenceData()
 
-            centroid = (prediction_xyxy[0] + (prediction_xywh[2] / 2), prediction_xyxy[1] + (prediction_xywh[3] / 2))
+        # We assume one detection per image
+        signal = prediction.boxes[0]
+        inference_data.class_name = signal.cls
+        signal_xywh = signal.xywh[0].to('cpu').detach().numpy().copy()
+        signal_xyxy = signal.xyxy[0].to('cpu').detach().numpy().copy()
 
-            # Print the bounding box
-            cv2.rectangle(raw_image, (prediction_xyxy[0], prediction_xyxy[1]), (prediction_xyxy[2], prediction_xyxy[3]), (0, 255, 0), 2)
+        centroid = (signal_xyxy[0] + (signal_xywh[2] / 2), signal_xyxy[1] + (signal_xywh[3] / 2))
 
-            # Add depth information if available
-            if depth_image:
-                depth_value = depth_image[int(centroid[1]), int(centroid[0])]
-                print(prediction.depth)
+        # Print the bounding box
+        cv2.rectangle(raw_image, (int(signal_xyxy[0]), int(signal_xyxy[1])), (int(signal_xyxy[2]), int(signal_xyxy[3])), (0, 255, 0), 2)
+
+        # Add depth information if available
+        if depth_image:
+            depth_value = depth_image[int(centroid[1]), int(centroid[0])]
+            inference_data.depth = depth_value
 
         # Draw the bounding box
         prediction_image = self.image_processor.cv_to_ros(raw_image, "bgr8")
         self.prediction_publisher.publish(prediction_image)
+        self.coordinates_publisher.publish(inference_data)
 
 
 def main() -> None:

@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>my_robot_depth_scanning</name>
+  <name>my_robot_depth_navigation</name>
   <version>0.0.0</version>
   <description>
     This package enhances ai signals detection by adding depth scanning capabilities
     thanks to the LIMO's depth camera.
   </description>
-  <maintainer email="johnnyastudilloso@gmail.com">johnnyastudillo</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="johnnyastudilloso@gmail.com">neorefraction</maintainer>
+  <license>MIT</license>
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
