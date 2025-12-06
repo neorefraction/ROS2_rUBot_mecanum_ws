@@ -100,7 +100,7 @@ class YoloPredictionNode(Node):
         raw_image = ros_to_cv(self.raw_image)
 
         # Get predictions
-        predictions = self.get_predictions(raw_img)
+        predictions = self.get_predictions(raw_image)
 
         # Early return if no results
         if not predictions:
@@ -108,6 +108,8 @@ class YoloPredictionNode(Node):
 
         # If predictions publish the image and their coordinates
         self.publish_detections(raw_image.copy(), predictions[0]) # Just one prediction is performed as we send just one image at a time
+
+        self.raw_image = None
 
 
     def get_predictions(self, img: Image) -> list:
@@ -137,18 +139,18 @@ class YoloPredictionNode(Node):
             # cv2.putText(overlay_image, label, (x_min, y_min - 10),
             #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        inference_data = InferenceData()
-
         # We assume one detection per image
-        signal = prediction.boxes[0]
-        inference_data.class_name = signal.cls
-        signal_xywh = signal.xywh[0].to('cpu').detach().numpy().copy()
-        signal_xyxy = signal.xyxy[0].to('cpu').detach().numpy().copy()
+        signal_prediction = prediction.boxes[0]
+        signal_xyxy = signal_prediction.xyxy[0].to('cpu').detach().numpy().copy()
+        centroid = ((signal_xyxy[2] - signal_xyxy[0]) / 2, (signal_xyxy[3] - signal_xyxy[1]) / 2)
 
-        centroid = (signal_xyxy[0] + (signal_xywh[2] / 2), signal_xyxy[1] + (signal_xywh[3] / 2))
+        inference_data = InferenceData()
+        inference_data.class_name = signal_prediction.cls
+        inference_data.centroid = centroid
 
-        # Print the bounding box
+        # Print the bounding box and centroid
         cv2.rectangle(raw_image, (int(signal_xyxy[0]), int(signal_xyxy[1])), (int(signal_xyxy[2]), int(signal_xyxy[3])), (0, 255, 0), 2)
+        cv2.circle(raw_image, (int(centroid[0]), int(centroid[1])), 5, (0, 255, 0), -1)
 
         # Add depth information if available
         if depth_image:
