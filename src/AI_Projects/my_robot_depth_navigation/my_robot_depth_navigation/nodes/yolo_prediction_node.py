@@ -19,6 +19,8 @@ from sensor_msgs.msg import Image
 # Custom message import
 from custom_msgs.msg import InferenceData
 
+from pathlib import Path
+
 
 YOLO_PREDICTIONS_TOPIC = "/yolo/predictions"
 
@@ -39,28 +41,47 @@ class YoloPredictionNode(Node):
          # Sets node's name
         super().__init__("yolo_prediction_node")
 
-        # Declare node topics as parameters
-        self.declare_parameter('camera_topic', '/camera/color/image_raw')
+        # ---------------------------------- Model Setup ------------------------------------
+
+        self.declare_parameter('model', 'yolov8_custom.pt')
+        package_path = Path(get_package_share_directory('my_robot_ai_identification'))
+        model = self.get_parameter('model').get_parameter_value().string_value
+        model_file = package_path / 'models' / model
+
+        if not os.path.exists(model_file):
+            self.get_logger().error(f"YOLO model not found: {model_file}")
+            raise FileNotFoundError(model_file)
+
+        self.yolo = YOLO(model)
+
+        # ---------------------------------- Camera Setup -----------------------------------
+
+        self.declare_parameter('camera_topic', '/camera')
         camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
 
-        self.yolo = YOLO(model_path)
-
-        # Subscribe node to raw image topic
         self.create_subscription(
             Image,
-            camera_topic,
+            camera_topic + '/color/image_raw',
             self.raw_image_callback,
             10
         )
 
-        # Publish images with predictions to yolo predictions topic
+        self.create_subscription(
+            Image,
+            camera_topic + '/depth/image_raw',
+            self.depth_image_callback,
+            10
+        )
+
+        # ---------------------------------- Publishers Setup -------------------------------
+
         self.prediction_publisher = self.create_publisher(
             Image,
             f'{YOLO_PREDICTIONS_TOPIC}/predictions_image',
             10
         )
 
-        # Publish custom coordinates messages to predictions/coordinates topic
+
         self.coordinates_publisher = self.create_publisher(
             InferenceData,
             f'{YOLO_PREDICTIONS_TOPIC}/predictions_data',
@@ -86,6 +107,21 @@ class YoloPredictionNode(Node):
         """
         self.raw_image = msg
 
+    def depth_image_callback(self, msg: Image) -> None:
+        """
+        Callback for the depth image topic. It just saves the image to avoid
+        interruption blocks.
+
+        Parameters:
+        ----------
+        msg : Image
+            The depth image message from the topic.
+        """
+
+        # If no detection is performed not save the depth image
+        if self.raw_image:
+            self.depth_image = msg
+
 
     def run(self) -> None:
         """
@@ -93,11 +129,12 @@ class YoloPredictionNode(Node):
         """
 
         # Early return if no images are read
-        if not self.raw_image:
+        if not self.raw_image or not self.depth_image:
             return
 
         # Convert ROS image to OpenCV image
         raw_image = ros_to_cv(self.raw_image)
+        depth_image = ros_to_cv(self.depth_image, encoding='32FC1')
 
         # Get predictions
         predictions = self.get_predictions(raw_image)
@@ -107,9 +144,11 @@ class YoloPredictionNode(Node):
             return
 
         # If predictions publish the image and their coordinates
-        self.publish_detections(raw_image.copy(), predictions[0]) # Just one prediction is performed as we send just one image at a time
+        self.publish_detections(raw_image.copy(), depth_image.copy(), predictions[0]) # Just one prediction is performed as we send just one image at a time
 
+        # Reset variables
         self.raw_image = None
+        self.depth_image = None
 
 
     def get_predictions(self, img: Image) -> list:
@@ -129,15 +168,7 @@ class YoloPredictionNode(Node):
         return self.yolo(img)
 
     
-    def publish_detections(self, raw_image: np.ndarray, prediction: list) -> None:
-            # Overlay the detected object's name and confidence level
-            # object_name = results.hypothesis.class_id
-            # confidence = results.hypothesis.score * 100  # Confidence in percentage
-            # label = f"{object_name}: {confidence:.2f}%"
-
-            # Put the label above the bounding box
-            # cv2.putText(overlay_image, label, (x_min, y_min - 10),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    def publish_detections(self, raw_image: np.ndarray, depth_image: np.ndarray, prediction: list) -> None:
 
         # We assume one detection per image
         signal_prediction = prediction.boxes[0]
@@ -148,14 +179,20 @@ class YoloPredictionNode(Node):
         inference_data.class_name = signal_prediction.cls
         inference_data.centroid = centroid
 
+         # object_name = results.hypothesis.class_id
+            # confidence = results.hypothesis.score * 100  # Confidence in percentage
+            # label = f"{object_name}: {confidence:.2f}%"
+
+            # Put the label above the bounding box
+            # cv2.putText(overlay_image, label, (x_min, y_min - 10),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
         # Print the bounding box and centroid
         cv2.rectangle(raw_image, (int(signal_xyxy[0]), int(signal_xyxy[1])), (int(signal_xyxy[2]), int(signal_xyxy[3])), (0, 255, 0), 2)
-        cv2.circle(raw_image, (int(centroid[0]), int(centroid[1])), 5, (0, 255, 0), -1)
+        cv2.circle(raw_image, (int(signal_xyxy[0]) + int(centroid[0]), int(signal_xyxy[1]) + int(centroid[1])), 5, (0, 255, 0), -1)
 
-        # Add depth information if available
-        if depth_image:
-            depth_value = depth_image[int(centroid[1]), int(centroid[0])]
-            inference_data.depth = depth_value
+        depth_value = depth_image[int(centroid[1]), int(centroid[0])]
+        inference_data.depth = depth_value
 
         # Draw the bounding box
         prediction_image = self.image_processor.cv_to_ros(raw_image, "bgr8")
@@ -169,7 +206,6 @@ def main() -> None:
 
     # Create YOLO service and node
     model = '/home/johnnyastudillo/Desktop/ROS2_rUBot_mecanum_ws/src/AI_Projects/my_robot_ai_identification/models/yolov8n_custom.pt'
-    #yolo = YoloService(model)
     node = YoloPredictionNode(model)
 
     # Spin the node
