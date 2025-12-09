@@ -18,6 +18,17 @@ class NavigationControlNode(Node):
 
         self.distance_threshold = distance_threshold
 
+        # ---------------------------------- Predictions Setup -----------------------------------
+
+        camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
+
+        self.create_subscription(
+            Image,
+            camera_topic + '/color/image_raw',
+            self.raw_image_callback,
+            1
+        )
+
         # Main loop
         self.create_timer(0.1, self.run)  # Run at 10 Hz
 

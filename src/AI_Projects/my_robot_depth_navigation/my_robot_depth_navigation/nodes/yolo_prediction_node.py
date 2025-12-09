@@ -5,9 +5,12 @@ with the objects, their positions and depth.
 """
 
 # YOLO service imports
+import os
 import rclpy
 from my_robot_depth_scanning.services.images_service import *
 from ultralytics import YOLO
+
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 # ROS2 core imports
 from rclpy.node import Node
@@ -20,10 +23,16 @@ from sensor_msgs.msg import Image
 from custom_msgs.msg import InferenceData
 
 from pathlib import Path
+from ament_index_python.packages import get_package_share_directory
 
 
 YOLO_PREDICTIONS_TOPIC = "/yolo/predictions"
 
+qos = QoSProfile(
+    reliability=ReliabilityPolicy.BEST_EFFORT,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1
+)
 
 class YoloPredictionNode(Node):
 
@@ -43,7 +52,7 @@ class YoloPredictionNode(Node):
 
         # ---------------------------------- Model Setup ------------------------------------
 
-        self.declare_parameter('model', 'yolov8_custom.pt')
+        self.declare_parameter('model', 'yolov8n_custom.pt')
         package_path = Path(get_package_share_directory('my_robot_ai_identification'))
         model = self.get_parameter('model').get_parameter_value().string_value
         model_file = package_path / 'models' / model
@@ -52,7 +61,7 @@ class YoloPredictionNode(Node):
             self.get_logger().error(f"YOLO model not found: {model_file}")
             raise FileNotFoundError(model_file)
 
-        self.yolo = YOLO(model)
+        self.yolo = YOLO(model_file)
 
         # ---------------------------------- Camera Setup -----------------------------------
 
@@ -63,14 +72,14 @@ class YoloPredictionNode(Node):
             Image,
             camera_topic + '/color/image_raw',
             self.raw_image_callback,
-            10
+            qos
         )
 
         self.create_subscription(
             Image,
             camera_topic + '/depth/image_raw',
             self.depth_image_callback,
-            10
+            qos
         )
 
         # ---------------------------------- Publishers Setup -------------------------------
@@ -90,6 +99,7 @@ class YoloPredictionNode(Node):
 
         # Computation variables
         self.raw_image = None
+        self.depth_image = None
 
         # Main loop
         self.create_timer(0.1, self.run)  # Run at 10 Hz
@@ -140,7 +150,7 @@ class YoloPredictionNode(Node):
         predictions = self.get_predictions(raw_image)
 
         # Early return if no results
-        if not predictions:
+        if not predictions or len(predictions[0].boxes) == 0:
             return
 
         # If predictions publish the image and their coordinates
@@ -176,26 +186,24 @@ class YoloPredictionNode(Node):
         centroid = ((signal_xyxy[2] - signal_xyxy[0]) / 2, (signal_xyxy[3] - signal_xyxy[1]) / 2)
 
         inference_data = InferenceData()
-        inference_data.class_name = signal_prediction.cls
+        inference_data.class_name = self.yolo.names[int(signal_prediction.cls)]
         inference_data.centroid = centroid
 
-         # object_name = results.hypothesis.class_id
-            # confidence = results.hypothesis.score * 100  # Confidence in percentage
-            # label = f"{object_name}: {confidence:.2f}%"
+        confidence = float(signal_prediction.conf) * 100  # Confidence in percentage
+        label = f"{inference_data.class_name}: {confidence:.2f}%"
 
-            # Put the label above the bounding box
-            # cv2.putText(overlay_image, label, (x_min, y_min - 10),
-            #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(raw_image, label, (int(signal_xyxy[0]), int(signal_xyxy[1]) - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # Print the bounding box and centroid
         cv2.rectangle(raw_image, (int(signal_xyxy[0]), int(signal_xyxy[1])), (int(signal_xyxy[2]), int(signal_xyxy[3])), (0, 255, 0), 2)
         cv2.circle(raw_image, (int(signal_xyxy[0]) + int(centroid[0]), int(signal_xyxy[1]) + int(centroid[1])), 5, (0, 255, 0), -1)
 
-        depth_value = depth_image[int(centroid[1]), int(centroid[0])]
+        depth_value = float(depth_image[int(centroid[1]), int(centroid[0])])
         inference_data.depth = depth_value
 
         # Draw the bounding box
-        prediction_image = self.image_processor.cv_to_ros(raw_image, "bgr8")
+        prediction_image = cv_to_ros(raw_image, "bgr8")
         self.prediction_publisher.publish(prediction_image)
         self.coordinates_publisher.publish(inference_data)
 
