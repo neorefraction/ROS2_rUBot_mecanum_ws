@@ -70,7 +70,7 @@ class YoloPredictionNode(Node):
 
         self.create_subscription(
             Image,
-            camera_topic + '/color/image_raw',
+            camera_topic + '/image_raw',
             self.raw_image_callback,
             qos
         )
@@ -199,7 +199,7 @@ class YoloPredictionNode(Node):
         cv2.rectangle(raw_image, (int(signal_xyxy[0]), int(signal_xyxy[1])), (int(signal_xyxy[2]), int(signal_xyxy[3])), (0, 255, 0), 2)
         cv2.circle(raw_image, (int(signal_xyxy[0]) + int(centroid[0]), int(signal_xyxy[1]) + int(centroid[1])), 5, (0, 255, 0), -1)
 
-        depth_value = float(depth_image[int(centroid[1]), int(centroid[0])])
+        depth_value = float(depth_image[int(signal_xyxy[0]) + int(centroid[0]), int(signal_xyxy[1]) +int(centroid[1])])
         inference_data.depth = depth_value
 
         # Draw the bounding box

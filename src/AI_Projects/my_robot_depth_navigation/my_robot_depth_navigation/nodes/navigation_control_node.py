@@ -45,6 +45,7 @@ class NavigationControlNode(Node):
             return
 
         self.handle_signs(self.detection.sign)
+        
 
     def should_react(self, depth: float) -> bool:
         """
