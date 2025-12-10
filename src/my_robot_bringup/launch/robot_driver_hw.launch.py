@@ -7,16 +7,10 @@ import os
 
 
 def generate_launch_description():
-    robot_name = LaunchConfiguration('robot_name')
     mecanum_serial_port = LaunchConfiguration('mecanum_serial_port')
     baud_rate = LaunchConfiguration('baud_rate')
     loop_rate = LaunchConfiguration('loop_rate')
     encoder_cpr = LaunchConfiguration('encoder_cpr')
-
-    declare_robot_name = DeclareLaunchArgument(
-        'robot_name', default_value='rUBot_mecanum',
-        description='Robot name / namespace'
-    )
 
     declare_mecanum_serial_port = DeclareLaunchArgument(
         'mecanum_serial_port', default_value='/dev/ttyACM0',
@@ -48,7 +42,6 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            'robot_name': robot_name,
             'serial_port': mecanum_serial_port,
             'baud_rate': baud_rate,
             'loop_rate': loop_rate,
@@ -57,7 +50,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        declare_robot_name,
         declare_mecanum_serial_port,
         declare_baud_rate,
         declare_loop_rate,

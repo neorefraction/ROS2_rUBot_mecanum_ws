@@ -85,12 +85,12 @@ def generate_launch_description():
     # ================================================================
     # Inclusió dels sub-launchs de hardware
     # ================================================================
-    nano_driver_hw_launch = IncludeLaunchDescription(
+    robot_driver_hw_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
                 get_package_share_directory('my_robot_bringup'),
                 'launch',
-                'rubot_nano_driver_hw.launch.py'
+                'robot_driver_hw.launch.py'
             )
         ),
         launch_arguments={
@@ -141,7 +141,7 @@ def generate_launch_description():
     ld.add_action(declare_usb_video_device)
 
     ld.add_action(robot_state_publisher_node)
-    ld.add_action(nano_driver_hw_launch)
+    ld.add_action(robot_driver_hw_launch)
     ld.add_action(rplidar_hw_launch)
     ld.add_action(usb_cam_hw_launch)
 
