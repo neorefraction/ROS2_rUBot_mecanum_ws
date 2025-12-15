@@ -9,7 +9,7 @@ custom_nav2:
 
     # Default intermediate waypoint [x, y, yaw]
     # (will be overridden if /traffic_waypoint is received)
-    waypoint: [2.1,0.6,0.0]
+    waypoint: [2.1,-0.2,0.0]
 
     # Time (seconds) to wait for /traffic_waypoint
     wait_for_traffic_wp: 5.0
