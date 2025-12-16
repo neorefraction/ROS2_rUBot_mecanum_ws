@@ -144,12 +144,11 @@ chmod +x install_udev_rules.sh
 sudo ./install_udev_rules.sh
 ```
 
-Install from source the ROS2 wrapper: https://github.com/orbbec/ros2_orbbec_camera.git
+Install from source the ROS2 wrapper: https://github.com/orbbec/OrbbecSDK_ROS2.git
 - Install ROS2 wrapper as in PC Ubuntu 22 section and launch with:
 ```bash
-mkdir -p ~/ros2_orbbec_ws/src
-cd ~/ros2_orbbec_ws/src
-git clone https://github.com/orbbec/ros2_orbbec_camera.git
+cd src
+git clone --branch main https://github.com/orbbec/OrbbecSDK_ROS2.git
 cd ..
 rosdep install --from-paths src --ignore-src -r -y
 colcon build
