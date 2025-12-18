@@ -96,20 +96,6 @@ def generate_launch_description():
         }.items()
     )
 
-    rplidar_hw_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('my_robot_bringup'),
-                'launch',
-                'rplidar_hw.launch.py'
-            )
-        ),
-        launch_arguments={
-            'rplidar_serial_port': rplidar_serial_port,
-            'rplidar_frame_id': rplidar_frame_id,
-        }.items()
-    )
-
     usb_cam_hw_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -122,6 +108,20 @@ def generate_launch_description():
             'image_width': camera_width,
             'image_height': camera_height,
             'video_device': usb_video_device,
+        }.items()
+    )
+
+    rplidar_hw_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('my_robot_bringup'),
+                'launch',
+                'rplidar_hw.launch.py'
+            )
+        ),
+        launch_arguments={
+            'rplidar_serial_port': rplidar_serial_port,
+            'rplidar_frame_id': rplidar_frame_id,
         }.items()
     )
 
