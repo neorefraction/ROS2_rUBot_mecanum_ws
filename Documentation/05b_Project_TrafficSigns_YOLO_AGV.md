@@ -159,7 +159,30 @@ You can also launch a complete vavigation control node that includes:
 - Navigation2 stack
 - YOLO signal detection node
 - and starts after a controlled delay, a Custom navigation node that integrates the detected waypoint in the navigation2 stack
-- To launch the complete navigation control with signal detection, use:
+
+In `simulation`:
+- To launch the Navigation2, use:
     ````shell
-    ros2 launch my_robot_ai_identification rubot_nav2_wp_yolo_full.launch.py nav_params:=yolo_targets_robot01.yaml yolo_params:=yolo_signals_robot01.yaml nav_start_delay:=5.0
+    ros2 launch my_robot_navigation2 navigation2_robot.launch.py use_sim_time:=true map_file:=map_square4m_sign.yaml params_file:=rubot_sw_lidar.yaml
+    ````
+- To launch the navigation control with signal detection, use:
+    ````shell
+    ros2 launch my_robot_ai_identification rubot_detection_nav2_yolo_control.launch.py nav_params:=yolo_targets_sw.yaml yolo_params:=yolo_signals.yaml nav_start_delay:=5.0
+    ````
+- Launch the `complete navigation control` with signal detection in real robot rUBot:
+    ````shell
+    ros2 launch my_robot_ai_identification rubot_detection_yolo_control.launch.py map_file:=map_square3m_walls.yaml params_file:=rubot_sw_lidar.yaml use_sim_time:=true yolo_params:=yolo_signals.yaml nav_params:=yolo_targets_sw.yaml nav_start_delay:=5.0
+    ````
+In `real robot`:
+- To launch the Navigation2, use:
+    ````shell
+    ros2 launch my_robot_navigation2 navigation2_robot.launch.py use_sim_time:=false map_file:=map_project.yaml params_file:=rubot_hw_lidar.yaml
+    ````
+- To launch the navigation control with signal detection, use:
+    ````shell
+    ros2 launch my_robot_ai_identification rubot_nav2_yolo_control.launch.py nav_params:=yolo_targets.yaml yolo_params:=yolo_signals.yaml nav_start_delay:=5.0
+    ````
+- Launch the `complete navigation control` with signal detection in real robot rUBot:
+    ````shell
+    ros2 launch my_robot_ai_identification rubot_detection_yolo_control.launch.py map_file:=map_square3m_walls.yaml params_file:=rubot_sw_lidar.yaml use_sim_time:=true yolo_params:=yolo_signals.yaml nav_params:=yolo_targets.yaml nav_start_delay:=5.0
     ````

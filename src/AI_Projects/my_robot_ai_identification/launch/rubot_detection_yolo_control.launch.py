@@ -62,7 +62,7 @@ def generate_launch_description():
         )
 
         nav_node = Node(
-            package='my_robot_nav_control',
+            package='my_robot_ai_identification',
             executable='rubot_nav2_wp_yolo_exec',
             name='custom_nav2',
             output='screen',
