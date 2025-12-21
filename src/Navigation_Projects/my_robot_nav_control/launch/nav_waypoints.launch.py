@@ -16,16 +16,16 @@ def generate_launch_description():
     config_dir = os.path.join(pkg_dir, 'config')
 
     # Default YAML filename (NOT full path)
-    default_yaml = 'waypoints_params.yaml'
+    default_yaml = 'waypoints_sw.yaml'
 
     yaml_file_arg = DeclareLaunchArgument(
-        'params_file',
+        'wp_file',
         default_value=default_yaml,
         description='YAML filename inside my_robot_nav_control/config'
     )
 
     def launch_setup(context, *args, **kwargs):
-        yaml_filename = LaunchConfiguration('params_file').perform(context)
+        yaml_filename = LaunchConfiguration('wp_file').perform(context)
         params_path = os.path.join(config_dir, yaml_filename)
 
         if not os.path.isfile(params_path):
