@@ -29,6 +29,7 @@ setup(
             'limo_rt_prediction_yolo_exec = my_robot_ai_identification.limo_rt_prediction_yolo:main',
             'rubot_detection_yolo_exec = my_robot_ai_identification.rubot_detection_yolo:main',
             'rubot_detection_wp_yolo_exec = my_robot_ai_identification.rubot_detection_wp_yolo:main',
+            'rubot_detection_wp_yolo_sw_exec = my_robot_ai_identification.rubot_detection_wp_yolo_sw:main',
             'rubot_nav2_wp_yolo_exec = my_robot_ai_identification.rubot_nav2_wp_yolo:main',
         ],
     },
