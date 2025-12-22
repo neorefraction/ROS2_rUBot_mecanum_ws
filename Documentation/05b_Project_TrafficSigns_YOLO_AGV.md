@@ -186,3 +186,7 @@ In `real robot`:
     ````shell
     ros2 launch my_robot_ai_identification rubot_detection_nav2_yolo_control.launch.py map_file:=map_project.yaml params_file:=rubot_sw_lidar.yaml use_sim_time:=false yolo_params:=yolo_signals.yaml nav_params:=yolo_targets.yaml nav_start_delay:=5.0
     ````
+
+| Identification and Navigation video | Code execution video |
+|----------|------------|
+| [▶️ mp4](./Images/07_Yolo/Yolo_left.mp4) | [▶️ webm](./Images/07_Yolo/YoloSignalWaypoint.webm) |
