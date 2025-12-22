@@ -1,7 +1,7 @@
 object_detection:
   ros__parameters:
     modelYolo: yolov8n_custom.pt
-    topic: /image_raw
+    topic: /rubot/camera1/image_raw
     twist_frequency: 20.0
     front_distance: 0.3
 
