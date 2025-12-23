@@ -6,6 +6,7 @@ from rclpy.qos import qos_profile_sensor_data
 
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Odometry
 
 from cv_bridge import CvBridge
 from custom_msgs.msg import InferenceResult, Yolov8Inference
@@ -24,7 +25,7 @@ from tf_transformations import euler_from_quaternion, quaternion_from_euler
 class YoloObjectDetection(Node):
     def __init__(self):
         super().__init__('object_detection')
-        self.declare_parameter('use_sim_time', False) # for simulation time
+        self.declare_parameter('use_sim_time', False) # Allow sim time when set from launch
         # ------------------- Parameters -------------------
         self.declare_parameter('modelYolo', 'yolov8n_custom.pt')
         self.declare_parameter('topic', '/image_raw')
@@ -105,11 +106,32 @@ class YoloObjectDetection(Node):
         # Publisher for traffic waypoints
         self.waypoint_pub = self.create_publisher(PoseStamped, "/traffic_waypoint", 10)
 
+        # --- Odom debug subscriber (optional) ---
+        self.odom_x = None
+        self.odom_y = None
+        self.odom_yaw = None
+
+        self.odom_sub = self.create_subscription(
+            Odometry,
+            '/odom',
+            self.odom_callback,
+            10
+        )
+
         # ------------------- State for non-blocking waits -------------------
         self.hold_until = 0.0  # seconds (node time)
         self.last_trigger_time = {}  # sign_name -> last_trigger_time_s
 
     # ------------------------------------------------------------------
+    # ODOM (debug)
+    def odom_callback(self, msg: Odometry):
+        self.odom_x = msg.pose.pose.position.x
+        self.odom_y = msg.pose.pose.position.y
+
+        q = msg.pose.pose.orientation
+        _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        self.odom_yaw = yaw
+
     # TF helpers
     def get_robot_xy_yaw_in_map(self):
         """
@@ -256,6 +278,67 @@ class YoloObjectDetection(Node):
         self.yolov8_pub.publish(yolov8_msg)
 
     # ------------------------------------------------------------------
+    # Log POSE comparison
+    def log_pose_comparison(self, sign_name: str, dist_map: float):
+        # Robot pose in map from TF
+        robot_pose_map = self.get_robot_xy_yaw_in_map()
+
+        # Optional: map->odom transform (shows drift/correction)
+        map_odom = None
+        map_odom_yaw = None
+        try:
+            tf_mo = self.tf_buffer.lookup_transform(
+                self.sign_frame,   # usually "map"
+                "odom",
+                rclpy.time.Time()
+            )
+
+            tx = tf_mo.transform.translation.x
+            ty = tf_mo.transform.translation.y
+
+            q = tf_mo.transform.rotation
+            _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+
+            map_odom = (tx, ty)
+            map_odom_yaw = yaw
+
+        except (LookupException, ConnectivityException, ExtrapolationException):
+            pass
+
+        if robot_pose_map is None:
+            if self.odom_x is not None and self.odom_y is not None and self.odom_yaw is not None:
+                odom_raw = f"({self.odom_x:.2f},{self.odom_y:.2f},{self.odom_yaw:.2f})"
+            else:
+                odom_raw = "(n/a)"
+
+            self.get_logger().info(
+                f"[SIGN] {sign_name} | dist(map)={dist_map:.2f} m | TF(map->{self.base_frame}) unavailable | "
+                f"odom_pose={odom_raw}"
+            )
+            return
+
+        mx, my, myaw = robot_pose_map
+
+        # Print odom pose if available
+        if self.odom_x is not None and self.odom_y is not None and self.odom_yaw is not None:
+            odom_str = f"odom_pose=({self.odom_x:.2f},{self.odom_y:.2f},{self.odom_yaw:.2f})"
+        else:
+            odom_str = "odom_pose=(n/a)"
+
+        if map_odom is not None and map_odom_yaw is not None:
+            map_odom_str = (
+                f"map->odom_trans=({map_odom[0]:.2f},{map_odom[1]:.2f}) "
+                f"yaw={map_odom_yaw:.2f}"
+            )
+        else:
+            map_odom_str = "map->odom_trans=(n/a)"
+
+        self.get_logger().info(
+            f"[SIGN] {sign_name} | dist(map)={dist_map:.2f} m | "
+            f"map_pose(TF)=({mx:.2f},{my:.2f},{myaw:.2f}) | {odom_str} | {map_odom_str}"
+        )
+
+    # ------------------------------------------------------------------
     # SIGN LOGIC (non-blocking)
     def handle_signs(self, detected_signs):
         now = self.get_clock().now().nanoseconds / 1e9
@@ -271,7 +354,8 @@ class YoloObjectDetection(Node):
         # Priority order: Prohibido > STOP > Ceda > turns
         if "Prohibido" in detected_signs and self.should_react("Prohibido") and can_trigger("Prohibido"):
             dist = self.get_sign_distance("Prohibido") or 0.0
-            self.get_logger().info(f"[SIGN] Prohibido | dist(map) = {dist:.2f} m → hold + bypass waypoint")
+            self.log_pose_comparison("Prohibido", dist)
+            self.get_logger().info(" → hold + bypass waypoint")
 
             # Hold time (non-blocking)
             self.hold_until = now + self.hold_prohibido_s
@@ -284,7 +368,8 @@ class YoloObjectDetection(Node):
 
         elif "STOP" in detected_signs and self.should_react("STOP") and can_trigger("STOP"):
             dist = self.get_sign_distance("STOP") or 0.0
-            self.get_logger().info(f"[SIGN] STOP | dist(map) = {dist:.2f} m → hold + forward waypoint")
+            self.log_pose_comparison("STOP", dist)
+            self.get_logger().info(" → hold + forward waypoint")
 
             self.hold_until = now + self.hold_stop_s
             self.last_trigger_time["STOP"] = now
@@ -296,7 +381,8 @@ class YoloObjectDetection(Node):
 
         elif "Ceda" in detected_signs and self.should_react("Ceda") and can_trigger("Ceda"):
             dist = self.get_sign_distance("Ceda") or 0.0
-            self.get_logger().info(f"[SIGN] Ceda | dist(map) = {dist:.2f} m → short hold + forward waypoint")
+            self.log_pose_comparison("Ceda", dist)
+            self.get_logger().info(" → short hold + forward waypoint")
 
             self.hold_until = now + self.hold_ceda_s
             self.last_trigger_time["Ceda"] = now
@@ -308,7 +394,8 @@ class YoloObjectDetection(Node):
 
         elif "Derecha" in detected_signs and self.should_react("Derecha") and can_trigger("Derecha"):
             dist = self.get_sign_distance("Derecha") or 0.0
-            self.get_logger().info(f"[SIGN] Derecha | dist(map) = {dist:.2f} m → right waypoint")
+            self.log_pose_comparison("Derecha", dist)
+            self.get_logger().info(" → right waypoint")
 
             self.last_trigger_time["Derecha"] = now
             wp = self.make_waypoint_near_sign("Derecha", dx_forward=self.wp_forward_m, dy_left=-self.wp_lateral_m)
@@ -317,7 +404,8 @@ class YoloObjectDetection(Node):
 
         elif "Izquierda" in detected_signs and self.should_react("Izquierda") and can_trigger("Izquierda"):
             dist = self.get_sign_distance("Izquierda") or 0.0
-            self.get_logger().info(f"[SIGN] Izquierda | dist(map) = {dist:.2f} m → left waypoint")
+            self.log_pose_comparison("Izquierda", dist)
+            self.get_logger().info(" → left waypoint")
 
             self.last_trigger_time["Izquierda"] = now
             wp = self.make_waypoint_near_sign("Izquierda", dx_forward=self.wp_forward_m, dy_left=+self.wp_lateral_m)
