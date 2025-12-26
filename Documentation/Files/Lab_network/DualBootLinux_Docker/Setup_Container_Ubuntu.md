@@ -9,9 +9,9 @@ We have created a `ros2-humble-biorobub.zip` file containing:
 - cyclonedds_robot.xml: CycloneDDS unicast configuration file for the robot.
 - entrypointpc.sh: entrypoint script to setup the environment variables when the container starts.
 
-First of all, a proper Docker Image has been created with the custom configuration on Dockerfile and uploaded to my DockerHub account (https://hub.docker.com/u/manelpuig).
-- Download the `ros2-humble-biorobub.zip` file from: https://github.com/manelpuig/ROS2_rUBot_mecanum_ws/blob/main/network_config/ros2-humble-biorobub.zip
-- In the folder where your Dockerfile is:
+**Professor** has to create a Docker Image with the custom configuration on Dockerfile and upload to my DockerHub account (https://hub.docker.com/u/manelpuig).
+- Download to `~/Desktop/rob` folder, the `ros2-humble-biorobub.zip` file from: https://github.com/manelpuig/ROS2_rUBot_mecanum_ws/blob/main/network_config/ros2-humble-biorobub.zip
+- Unzip and create the Image:
     ````bash
     docker build -t ros2-humble-biorobub-pc:latest .
     ````
@@ -31,7 +31,7 @@ First of all, a proper Docker Image has been created with the custom configurati
     ````bash
     docker rmi ros2-humble-biorobub-pc:latest
     ````
-Students in the lab they only need to:
+**Students** in the lab they only need to:
 - Unzip the `ros2-humble-biorobub.zip` file in a `~/Desktop/rob` folder on Linux PC
 - review on:
     - `docker-compose.yml` file: `ROS_DOMAIN_ID` variable to match your robot.
