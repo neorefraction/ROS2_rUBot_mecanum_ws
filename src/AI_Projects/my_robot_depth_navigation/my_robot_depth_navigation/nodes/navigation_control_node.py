@@ -3,7 +3,10 @@ import rclpy
 
 # ROS2 core imports
 from rclpy.node import Node
-from rclpy.logging import get_logger
+from geometry_msgs.msg import Twist
+
+# Custom message import
+from custom_msgs.msg import InferenceData
 
 class NavigationControlNode(Node):
 
@@ -13,21 +16,21 @@ class NavigationControlNode(Node):
 
         # ---------------------------------- Parameters Setup ------------------------------------
 
-        self.declare_parameter('distance_threshold', 1.0)
+        self.declare_parameter('distance_threshold', 20.0)
         distance_threshold = self.get_parameter('distance_threshold').get_parameter_value().double_value
 
         self.distance_threshold = distance_threshold
 
         # ---------------------------------- Predictions Setup -----------------------------------
 
-        camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
-
         self.create_subscription(
-            Image,
-            camera_topic + '/color/image_raw',
-            self.raw_image_callback,
-            1
+            InferenceData,
+            '/yolo/predictions/predictions_data',
+            self.inference_data_callback,
+            10
         )
+
+        self.detection = None
 
         # Main loop
         self.create_timer(0.1, self.run)  # Run at 10 Hz
@@ -44,7 +47,20 @@ class NavigationControlNode(Node):
         if not self.should_react(self.detection.depth):
             return
 
-        self.handle_signs(self.detection.sign)
+        self.handle_signs(self.detection.class_name)
+    
+
+    def inference_data_callback(self, msg: InferenceData):
+        """
+        Callback function to handle incoming inference data messages.
+
+        Parameters:
+        ----------
+        msg : InferenceData
+            The inference data message containing detected sign information.
+        """
+
+        self.detection = msg
         
 
     def should_react(self, depth: float) -> bool:
@@ -127,3 +143,17 @@ class NavigationControlNode(Node):
 
         if self.current_twist:
             self.cmd_vel_pub.publish(self.current_twist)
+
+
+def main() -> None:
+    # Initialize ROS2
+    rclpy.init()
+
+    node = NavigationControlNode()
+
+    # Spin the node
+    rclpy.spin(node)
+
+    # Shutdown ROS2 when done
+    node.destroy_node()
+    rclpy.shutdown()

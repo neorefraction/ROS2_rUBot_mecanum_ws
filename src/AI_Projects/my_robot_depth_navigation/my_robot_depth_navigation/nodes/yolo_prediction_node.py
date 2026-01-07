@@ -17,7 +17,7 @@ from rclpy.node import Node
 from rclpy.logging import get_logger
 
 # ROS2 image processing imports
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 
 # Custom message import
 from custom_msgs.msg import InferenceData
@@ -69,17 +69,17 @@ class YoloPredictionNode(Node):
         camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
 
         self.create_subscription(
-            Image,
-            camera_topic + '/image_raw',
+            CompressedImage,
+            camera_topic + '/color/image_raw/compressed',
             self.raw_image_callback,
-            qos
+            10
         )
 
         self.create_subscription(
-            Image,
-            camera_topic + '/depth/image_raw',
+            CompressedImage,
+            camera_topic + '/depth/image_raw/compressedDepth',
             self.depth_image_callback,
-            qos
+            10
         )
 
         # ---------------------------------- Publishers Setup -------------------------------
@@ -129,8 +129,9 @@ class YoloPredictionNode(Node):
         """
 
         # If no detection is performed not save the depth image
-        if self.raw_image:
-            self.depth_image = msg
+        if not self.raw_image:
+            return
+        self.depth_image = msg
 
 
     def run(self) -> None:
@@ -144,7 +145,7 @@ class YoloPredictionNode(Node):
 
         # Convert ROS image to OpenCV image
         raw_image = ros_to_cv(self.raw_image)
-        depth_image = ros_to_cv(self.depth_image, encoding='32FC1')
+        depth_image = ros_depth_to_cv(self.depth_image)
 
         # Get predictions
         predictions = self.get_predictions(raw_image)
@@ -155,10 +156,6 @@ class YoloPredictionNode(Node):
 
         # If predictions publish the image and their coordinates
         self.publish_detections(raw_image.copy(), depth_image.copy(), predictions[0]) # Just one prediction is performed as we send just one image at a time
-
-        # Reset variables
-        self.raw_image = None
-        self.depth_image = None
 
 
     def get_predictions(self, img: Image) -> list:
@@ -197,13 +194,13 @@ class YoloPredictionNode(Node):
 
         # Print the bounding box and centroid
         cv2.rectangle(raw_image, (int(signal_xyxy[0]), int(signal_xyxy[1])), (int(signal_xyxy[2]), int(signal_xyxy[3])), (0, 255, 0), 2)
-        cv2.circle(raw_image, (int(signal_xyxy[0]) + int(centroid[0]), int(signal_xyxy[1]) + int(centroid[1])), 5, (0, 255, 0), -1)
+        cv2.circle(raw_image, (int(signal_xyxy[1]) + int(centroid[1]), int(signal_xyxy[0]) + int(centroid[0])), 5, (0, 255, 0), -1)
 
-        depth_value = float(depth_image[int(signal_xyxy[0]) + int(centroid[0]), int(signal_xyxy[1]) +int(centroid[1])])
+        depth_value = 4.0 #float(depth_image[int(signal_xyxy[1]) + int(centroid[1]), int(signal_xyxy[0]) +int(centroid[0])])
         inference_data.depth = depth_value
 
         # Draw the bounding box
-        prediction_image = cv_to_ros(raw_image, "bgr8")
+        prediction_image = cv_to_ros(raw_image)
         self.prediction_publisher.publish(prediction_image)
         self.coordinates_publisher.publish(inference_data)
 

@@ -29,7 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'yolo_predict = my_robot_depth_navigation.nodes.yolo_prediction_node:main',
-            'depth_scan = my_robot_depth_navigation.nodes.depth_scan_node:main',
+            'navigation_control = my_robot_depth_navigation.nodes.navigation_control_node:main',
         ],
     },
 )
