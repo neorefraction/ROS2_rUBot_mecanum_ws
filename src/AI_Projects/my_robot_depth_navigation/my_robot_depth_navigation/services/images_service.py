@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from cv_bridge import CvBridge
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 
 bridge = CvBridge()
 
@@ -41,6 +41,10 @@ def cv_to_ros(source: np.ndarray, encoding: str = "bgr8") -> Image:
         The converted ROS Image message.
     """
     return bridge.cv2_to_imgmsg(source, encoding)
+
+def compressed_to_cv(source: CompressedImage, encoding: int = cv2.IMREAD_COLOR):
+    np_arr = np.frombuffer(source.data, np.uint8)
+    return cv2.imdecode(np_arr, encoding)
 
 
 def resize_image(source: np.ndarray, width: int, height: int) -> np.ndarray:

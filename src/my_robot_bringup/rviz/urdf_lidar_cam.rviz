@@ -214,7 +214,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /limo/limo_camera/image_raw
+        Value: /limo/camera/image_raw
       Value: true
   Enabled: true
   Global Options:

@@ -260,7 +260,7 @@
   </gazebo>
   <!-- 2D Camera controller 
   <gazebo reference="camera">
-    <sensor name="camera1" type="camera">
+    <sensor name="color" type="camera">
       <update_rate>30.0</update_rate>
       <camera name="front">
         <horizontal_fov>1.3962634</horizontal_fov>
@@ -277,10 +277,11 @@
       <plugin filename="libgazebo_ros_camera.so" name="camera_controller">
         <alwaysOn>true</alwaysOn>
         <visualize>false</visualize>
-        <cameraName>rubot/camera1</cameraName>
+        <namespace>/limo/limo_camera</namespace>
+        <camera_name>color</camera_name>
         <imageTopicName>image_raw</imageTopicName>
         <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <frameName>camera</frameName>
+        <frameName>color_camera_frame</frameName>
         <hackBaseline>0.07</hackBaseline>
         <distortionK1>0.0</distortionK1>
         <distortionK2>0.0</distortionK2>
@@ -288,8 +289,9 @@
         <distortionT1>0.0</distortionT1>
         <distortionT2>0.0</distortionT2>
       </plugin>
+
     </sensor>
-  </gazebo>-->
+  </gazebo> -->
 <!-- Optical frame is the frame in which the depth points are published-->
 <!-- Reference frame is the frame rect to which we position the optical frame-->
     <gazebo reference="camera">
@@ -316,17 +318,11 @@
             <plugin name="gazebo_ros_depth_camera_sensor" filename="libgazebo_ros_camera.so">
               <ros>
                 <namespace>/limo</namespace>
-                <argument>--ros-args --remap limo_camera/image_raw:=limo_camera/image</argument>
-                <argument>--ros-args --remap limo_camera/image_depth:=limo_camera/depth/camera_image_depth</argument>
-                <argument>--ros-args --remap limo_camera/camera_info:=limo_camera/camera_info_raw</argument>
-                <argument>--ros-args --remap limo_camera/camera_info_depth:=limo_camera/camera_info_depth</argument>
-                <argument>--ros-args --remap limo_camera/points:=limo_camera/camera_points</argument>
               </ros>
-              <camera_name>limo_camera</camera_name>
-              <frame_name>camera</frame_name>
+              <camera_name>camera</camera_name>
+              <frame_name>depth_camera_frame</frame_name>
               <hack_baseline>0.07</hack_baseline>
               <min_depth>0.001</min_depth>
-
             </plugin>
         </sensor>
     </gazebo>

@@ -12,7 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[py|xml]'))),
+         # Instala los archivos launch
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'models'), glob(os.path.join('models', '*.*'))),
     ],
     install_requires=['setuptools'],
@@ -28,7 +29,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'yolo_predict = my_robot_depth_navigation.nodes.yolo_prediction_node:main',
+            'yolo_prediction_node = my_robot_depth_navigation.nodes.yolo_prediction_node:main',
             'navigation_control = my_robot_depth_navigation.nodes.navigation_control_node:main',
         ],
     },
