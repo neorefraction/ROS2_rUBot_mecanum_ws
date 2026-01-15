@@ -144,6 +144,9 @@ class YoloPredictionNode(Node):
         # Early return if no images are read
         if not self.color_image or not self.depth_image:
             return
+        
+        color_image = self.color_image
+        depth_image = self.depth_image
 
         # Convert ROS image to OpenCV image
         color_image = compressed_to_cv(self.color_image)
