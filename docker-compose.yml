@@ -1,0 +1,22 @@
+services:
+  ros2:
+    build: .
+    container_name: ros2
+    network_mode: host
+    tty: true
+    stdin_open: true
+    privileged: true
+
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - QT_QPA_PLATFORM=xcb
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_LOCALHOST_ONLY=0
+      - GAZEBO_MODEL_PATH=/home/ROS2_rUBot_mecanum_ws/src/my_robot_bringup/models:$GAZEBO_MODEL_PATH
+      - GAZEBO_PLUGIN_PATH=/opt/ros/humble/lib:$GAZEBO_PLUGIN_PATH
+
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./:/home/ROS2_rUBot_mecanum_ws
