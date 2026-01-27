@@ -3,7 +3,7 @@ import rclpy
 
 # ROS2 core imports
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
+from visualization_msgs.msg import Marker
 
 # Custom message import
 from custom_msgs.msg import InferenceData
@@ -16,10 +16,8 @@ class NavigationControlNode(Node):
 
         # ---------------------------------- Parameters Setup ------------------------------------
 
-        self.declare_parameter('distance_threshold', 20.0)
-        distance_threshold = self.get_parameter('distance_threshold').get_parameter_value().double_value
-
-        self.distance_threshold = distance_threshold
+        self.declare_parameter('distance_threshold', 1.0)
+        self.distance_threshold = self.get_parameter('distance_threshold').get_parameter_value().double_value
 
         # ---------------------------------- Predictions Setup -----------------------------------
 
@@ -29,6 +27,11 @@ class NavigationControlNode(Node):
             self.inference_data_callback,
             10
         )
+
+        self.marker_pub = self.create_publisher(Marker, '/virtual_walls', 10)
+        
+        self.last_action_time = self.get_clock().now()
+        self.is_stopped = False
 
         self.detection = None
 
@@ -41,13 +44,12 @@ class NavigationControlNode(Node):
         Main loop responsible for control the robot based on the detected signs.
         """
 
-        if not self.detection:
+        detection = self.detection
+
+        if not detection or detection.depth > self.distance_threshold or detection.depth < 0:
             return
 
-        if not self.should_react(self.detection.depth):
-            return
-
-        self.handle_signs(self.detection.class_name)
+        self.handle_signs(detection.class_name, detection.depth)
     
 
     def inference_data_callback(self, msg: InferenceData):
@@ -61,27 +63,9 @@ class NavigationControlNode(Node):
         """
 
         self.detection = msg
-        
-
-    def should_react(self, depth: float) -> bool:
-        """
-        Defines whether the robot should react to a sign based on its distance.
-
-        Parameters:
-        ----------
-        depth : float
-            The Z coordinate of the sign relative to the robot.
-
-        Returns:
-        -------
-        bool
-            True if the robot is close enough to the sign to react.
-        """
-
-        return depth <= self.distance_threshold
 
 
-    def handle_signs(self, detected_sign: str):
+    def handle_signs(self, detected_sign: str, distance: float):
         """
         Handles the signs detected by the YOLO service.
 
@@ -95,55 +79,26 @@ class NavigationControlNode(Node):
         None
         """
 
-        now = self.get_clock().now().nanoseconds / 1e9
+        now = self.get_clock().now()
 
-        def T(vx=0.0, vy=0.0, wz=0.0):
-            """
-            Inner function to create a Twist message.
+        if detected_sign == "Stop" and not self.is_stopped:
+            self.execute_stop()
 
-            Parameters:
-            ----------
-            vx : float
-                The linear velocity in the x direction.
-            vy : float
-                The linear velocity in the y direction.
-            wz : float
-                The angular velocity in the z direction.
+        elif detected_sign in ["Derecha", "Izquierda", "Prohibido"]:
+            self.create_virtual_wall(detected_sign, distance)
 
-            Returns:
-            -------
-            Twist
-                The Twist message.
-            """
-            t = Twist()
-            t.linear.x = float(vx)
-            t.linear.y = float(vy)
-            t.angular.z = float(wz)
-            return t
+    def execute_stop(self) -> None:
+        req = Empty.Request()
+        self.pause_client.call_async(req)
+        self.is_stopped = True
 
-        if detected_sign == "Prohibido":
-            self.current_twist = T(0.0, 0.0, 0.0)
+        self.create_timer(3.0, self.resume_navigation, timer_period_callback=None)
 
-        elif detected_sign == "STOP":
-            self.current_twist = T(0.0, 0.0, 0.0)
-
-        elif detected_sign == "Ceda":
-            self.current_twist = T(0.05, 0.0, 0.0)
-            self.action_end_time = now + 3.0
-
-        elif detected_sign == "Derecha":
-            wp = self.create_lateral_waypoint("Derecha", side="right")
-            if wp:
-                self.waypoint_pub.publish(wp)
-
-        elif detected_sign == "Izquierda":
-            wp = self.create_lateral_waypoint("Izquierda", side="left")
-            if wp:
-                self.waypoint_pub.publish(wp)
-
-        if self.current_twist:
-            self.cmd_vel_pub.publish(self.current_twist)
-
+    def resume_navigation(self, timer) -> None:
+        req = Empty.Request()
+        self.resume_client.call_async(req)
+        self.is_stopped = False
+        timer.cancel()
 
 def main() -> None:
     # Initialize ROS2

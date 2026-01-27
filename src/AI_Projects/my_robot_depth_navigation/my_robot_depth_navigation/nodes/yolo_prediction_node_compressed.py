@@ -19,7 +19,7 @@ from rclpy.node import Node
 from rclpy.logging import get_logger
 
 # ROS2 image processing imports
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 
 # Custom message import
 from custom_msgs.msg import InferenceData
@@ -70,11 +70,9 @@ class YoloPredictionNode(Node):
         self.declare_parameter('camera_topic', '/limo/camera')
         camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
 
-        get_logger('JOHNNY').error(f'HE LLEGADO {camera_topic}')
-
         self.create_subscription(
-            Image,
-            camera_topic + '/color/image_raw',
+            CompressedImage,
+            camera_topic + '/color/image_raw/compressed',
             self.color_image_callback,
             qos
         )
@@ -151,7 +149,7 @@ class YoloPredictionNode(Node):
         depth_image = self.depth_image
 
         # Convert ROS image to OpenCV image
-        color_image = ros_to_cv(self.color_image)
+        color_image = compressed_to_cv(self.color_image)
         depth_image = ros_to_cv(self.depth_image, encoding='32FC1')
 
         # Get predictions
