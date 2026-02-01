@@ -107,7 +107,7 @@ class YoloPredictionNode(Node):
         self.create_timer(0.1, self.run)  # Run at 10 Hz
 
 
-    def color_image_callback(self, msg: Image) -> None:
+    def color_image_callback(self, msg: CompressedImage) -> None:
         """
         Callback for the raw image topic. It just saves the image to avoid
         interruption blocks.
@@ -130,9 +130,6 @@ class YoloPredictionNode(Node):
             The depth image message from the topic.
         """
 
-        # If no detection is performed not save the depth image
-        if not self.color_image:
-            return
         self.depth_image = msg
 
 
@@ -142,15 +139,22 @@ class YoloPredictionNode(Node):
         """
 
         # Early return if no images are read
-        if not self.color_image or not self.depth_image:
+        if self.color_image is None or self.depth_image is None:
             return
         
         color_image = self.color_image
         depth_image = self.depth_image
 
-        # Convert ROS image to OpenCV image
-        color_image = compressed_to_cv(self.color_image)
-        depth_image = ros_to_cv(self.depth_image, encoding='32FC1')
+        # Avoids condition races
+        self.color_image = None
+        self.depth_image = None
+
+        color_image = compressed_to_cv(color_image)
+        depth_image = ros_to_cv(depth_image, encoding='32FC1')
+
+        # Invalidate frame if one of the images is not valid
+        if color_image is None or depth_image is None:
+            return
 
         # Get predictions
         predictions = self.get_predictions(color_image)

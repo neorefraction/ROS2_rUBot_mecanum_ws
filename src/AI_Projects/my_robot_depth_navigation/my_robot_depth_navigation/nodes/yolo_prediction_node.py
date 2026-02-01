@@ -70,8 +70,6 @@ class YoloPredictionNode(Node):
         self.declare_parameter('camera_topic', '/limo/camera')
         camera_topic = self.get_parameter('camera_topic').get_parameter_value().string_value
 
-        get_logger('JOHNNY').error(f'HE LLEGADO {camera_topic}')
-
         self.create_subscription(
             Image,
             camera_topic + '/color/image_raw',
@@ -133,8 +131,6 @@ class YoloPredictionNode(Node):
         """
 
         # If no detection is performed not save the depth image
-        if not self.color_image:
-            return
         self.depth_image = msg
 
 
@@ -150,9 +146,12 @@ class YoloPredictionNode(Node):
         color_image = self.color_image
         depth_image = self.depth_image
 
+        self.color_image = None
+        self.depth_image = None
+
         # Convert ROS image to OpenCV image
-        color_image = ros_to_cv(self.color_image)
-        depth_image = ros_to_cv(self.depth_image, encoding='32FC1')
+        color_image = ros_to_cv(color_image)
+        depth_image = ros_to_cv(depth_image, encoding='32FC1')
 
         # Get predictions
         predictions = self.get_predictions(color_image)
