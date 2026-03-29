@@ -8,8 +8,7 @@ find_package(std_msgs REQUIRED) # Si Yolov8Inference.msg utilitza std_msgs/Heade
 
 # Message files
 set(msg_files
-  "msg/InferenceResult.msg"
-  "msg/Yolov8Inference.msg"
+  "msg/InferenceData.msg"
 )
 
 # Generate messages
